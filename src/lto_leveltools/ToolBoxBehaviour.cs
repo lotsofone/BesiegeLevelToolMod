@@ -14,6 +14,8 @@ namespace lto_leveltools
         private readonly int windowID = ModUtility.GetWindowId();
         Rect windowRect = new Rect(20, 300, 150, 200);
 
+        public int varMode = 0;//变量模式，0：局部变量，1：全局变量
+
         public bool generateForward = false;
         public bool generateBackward = true;
         public string clkForward = "  0";
@@ -40,27 +42,11 @@ namespace lto_leveltools
 
         public Action OnLogButtonClick;
         public Action OnGenerateButtonClick;
-        //-------------------------------------------------------------------------
-        public ModKey DisplaySceneSettingKey = ModKeys.GetKey("Scene SettingUI-key");
 
-
-        public Action OnFogButtonClick;
-
-        public Action OnFloorButtonClick;
-
-        public Action OnWorldBoundsButtonClick;
-
-        public Action OnReloadScenesButtonClick;
-
-        public Action OnOpenScenePacksDirectoryButtonClick;
-
-        private Vector2 scrollVector = Vector2.zero;
-
-        private readonly int buttonHeight = 20;
-
-        private Rect sceneButtonsRect;
-
-        private GUIStyle windowStyle;
+        public ClkDefination GetClkDefination(int clk)
+        {
+            return new ClkDefination("clk", clk, this.varMode == 0 ? false : true);
+        }
 
         void Awake()
         {
@@ -115,11 +101,11 @@ namespace lto_leveltools
             string type = this.relativeMode == 0 ? "Absolute" : (this.relativeMode == 1 ? "WorldDirection" : "LocalDirection");
             if (generateForward)
             {
-                modBehaviour.GenerateEvent(true, clk1, time, timeRandom, type);
+                modBehaviour.GenerateEvent(true, GetClkDefination(clk1), time, timeRandom, type);
             }
             if (generateBackward)
             {
-                modBehaviour.GenerateEvent(false, clk2, time, timeRandom, type);
+                modBehaviour.GenerateEvent(false, GetClkDefination(clk2), time, timeRandom, type);
             }
             if (this.logAfterGenerate)
             {
@@ -172,11 +158,11 @@ namespace lto_leveltools
             }
             if (generateForward)
             {
-                modBehaviour.GenerateWaitEvent(true, clk1, time, timeRandom);
+                modBehaviour.GenerateWaitEvent(true, GetClkDefination(clk1), time, timeRandom);
             }
             if (generateBackward)
             {
-                modBehaviour.GenerateWaitEvent(false, clk2, time, timeRandom);
+                modBehaviour.GenerateWaitEvent(false, GetClkDefination(clk2), time, timeRandom);
             }
         }
 
@@ -189,9 +175,14 @@ namespace lto_leveltools
         }
         void ToolBoxWindow(int id)
         {
+            this.varMode = GUILayout.SelectionGrid(this.varMode, new string[] { "局部变量", "全局变量"}, 2);
             GUILayout.BeginVertical();
-            GUILayout.Label("选中地形:" + modBehaviour.GetLevellEditorSelectionCount().ToString());
-            GUILayout.Label("记录地形:" + modBehaviour.entityLogs.Count);
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("选中地形:" + modBehaviour.GetLevellEditorSelectionCount().ToString());
+                GUILayout.Label("记录地形:" + modBehaviour.entityLogs.Count);
+                GUILayout.EndVertical();
+            }
             GUILayout.BeginHorizontal();
             {
                 GUILayout.BeginVertical();
@@ -343,7 +334,7 @@ namespace lto_leveltools
                 this.userInfo = "绝对记录clk不正确";
                 return;
             }
-            modBehaviour.QuickAbsoluteLog(clk, duration);
+            modBehaviour.QuickAbsoluteLog(GetClkDefination(clk), duration);
             this.userInfo = "当前坐标已经记录在clk=" + clk.ToString() + "中";
         }
         public void RemoveClkClicked()
@@ -358,7 +349,7 @@ namespace lto_leveltools
                 this.userInfo = "绝对记录clk不正确";
                 return;
             }
-            modBehaviour.RemoveSelectionClk(clk);
+            modBehaviour.RemoveSelectionClk(GetClkDefination(clk));
             this.userInfo = "移除了选区clk=" + clk.ToString() + "的触发器";
         }
         public void ExecuteButtonClicked(bool forward)
@@ -373,18 +364,18 @@ namespace lto_leveltools
                 this.userInfo = "执行clk不正确";
                 return;
             }
-            modBehaviour.TransformByClk(clk1, forward);
+            modBehaviour.TransformByClk(GetClkDefination(clk1), forward);
             this.userInfo = "执行了clk=" + clk1.ToString() + "的触发器";
         }
         public void GenerateButtonClicked()
         {
-            List<int> clks = new List<int>();
+            List<ClkDefination> clks = new List<ClkDefination>();
             string[] strs = this.clksControlModule.Split(',');
             try
             {
                 foreach(var str in strs){
                     int clk = Convert.ToInt32(str);
-                    clks.Add(clk);
+                    clks.Add(GetClkDefination(clk));
                 }
             }
             catch (Exception e)

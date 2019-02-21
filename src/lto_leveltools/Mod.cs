@@ -22,4 +22,16 @@ namespace lto_leveltools
             //SingleInstance<RocketsController>.get_Instance().transform.SetParent(BlockEnhancementMod.mod.transform);
         }
     }
+    public class ClkDefination
+    {
+        public string key;
+        public float value;
+        public bool global;
+        public ClkDefination(string varName, float value, bool global=false)
+        {
+            this.key = varName;
+            this.value = value;
+            this.global = global;
+        }
+    }
 }

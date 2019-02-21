@@ -30,7 +30,7 @@ namespace lto_leveltools
                 entityLogs.Add(new EntityLog(e));
             }
         }
-        public void GenerateControlModule(List<int> clks)
+        public void GenerateControlModule(List<ClkDefination> clks)
         {
             LevelEditor.Instance.AddEntity(9003, this.GetLevelEditorSelectionCenter(), Quaternion.identity, new Vector3(1, 1, 1), true);
             var targets = LevelEditor.Instance.Selection;
@@ -38,26 +38,28 @@ namespace lto_leveltools
             //给生成物增加逻辑
             GenericEntity ge = newEntity.EntityBehaviour;
             ge.logicData.Clear();//先清除
-            foreach (int clk in clks) {
+            foreach (ClkDefination clk in clks) {
                 EntityLogic trigger = new EntityLogic(TriggerType.Variable, ge);
                 trigger.varCompare = EntityLogic.VarCompareType.Equals;
-                trigger.varGlobal = false;
-                trigger.varKey = "clk";
-                trigger.varThreshold = clk;
+                trigger.varGlobal = clk.global;
+                trigger.varKey = clk.key;
+                trigger.varThreshold = clk.value;
                 ge.logicData.Add(trigger);
 
                 EntityEvent evt = new EntityEvent(EventContainer.EventType.Variable);
                 var data = (EventContainer.VariableEvent)evt.eventData;
-                data.key = "clk";
-                data.val = clk;
+                data.key = clk.key;
+                data.val = clk.value;
                 data.modifyType = EventContainer.VarModifyType.Set;
                 //var pick = (EventContainer.PickContainer)evt.eventData;
                 //pick.pickTargets = targets;
-                foreach(var e in targets)
+                if (!clk.global)
                 {
-                    evt.entityList.Add(e.identifier);
+                    foreach (var e in targets)
+                    {
+                        evt.entityList.Add(e.identifier);
+                    }
                 }
-                
                 //evt.entityList
 
                 trigger.events.Add(evt);
@@ -65,11 +67,12 @@ namespace lto_leveltools
             //设置选区，选中生成物
             LevelEditor.Instance.selectionController.Select(newEntity, false, false);
         }
-        public EntityLogic FindClk(GenericEntity ge, int clk)
+        public EntityLogic FindClk(GenericEntity ge, ClkDefination clk)
         {
             foreach(EntityLogic el in ge.logicData)
             {
-                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals && Mathf.Approximately(el.varThreshold, clk))
+                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals &&
+                    Mathf.Approximately(el.varThreshold, clk.value) && el.varKey.Equals(clk.key) && el.varGlobal == clk.global)
                 {
                     return el;
                 }
@@ -77,12 +80,13 @@ namespace lto_leveltools
             return null;
         }
         //移除一个物体的一个clk触发器及其事件链
-        public void RemoveClk(GenericEntity ge, int clk)
+        public void RemoveClk(GenericEntity ge, ClkDefination clk)
         {
             for(int i=0; i<ge.logicData.Count;)
             {
                 var el = ge.logicData[i];
-                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals && Mathf.Approximately(el.varThreshold, clk))
+                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals &&
+                    Mathf.Approximately(el.varThreshold, clk.value) && el.varKey.Equals(clk.key) && el.varGlobal == clk.global)
                 {
                     ge.logicData.RemoveAt(i);
                 }
@@ -93,7 +97,7 @@ namespace lto_leveltools
             }
         }
         //
-        public void RemoveSelectionClk(int clk)
+        public void RemoveSelectionClk(ClkDefination clk)
         {
             foreach(LevelEntity e in GetLevelEditorSelection())
             {
@@ -101,18 +105,18 @@ namespace lto_leveltools
             }
         }
         //生成一个clk事件
-        public EntityLogic GenerateClk(GenericEntity ge, int clk)
+        public EntityLogic GenerateClk(GenericEntity ge, ClkDefination clk)
         {
             var trigger = new EntityLogic(TriggerType.Variable, ge);
             trigger.varCompare = EntityLogic.VarCompareType.Equals;
-            trigger.varGlobal = false;
-            trigger.varKey = "clk";
-            trigger.varThreshold = clk;
+            trigger.varGlobal = clk.global;
+            trigger.varKey = clk.key;
+            trigger.varThreshold = clk.value;
             ge.logicData.Add(trigger);
             return trigger;
         }
         //根据记录集合，生成移动事件
-        public void GenerateEvent(bool forward, int clk, float time, float timeRandom, string type = "LocalDirection")
+        public void GenerateEvent(bool forward, ClkDefination clk, float time, float timeRandom, string type = "LocalDirection")
         {
             foreach(var el in this.entityLogs)
             {
@@ -236,7 +240,7 @@ namespace lto_leveltools
             }
         }
         //给选区中的entity生成等待事件
-        public void GenerateWaitEvent(bool forward, int clk, float time, float timeRandom)
+        public void GenerateWaitEvent(bool forward, ClkDefination clk, float time, float timeRandom)
         {
             foreach (var e in this.GetLevelEditorSelection())
             {
@@ -251,9 +255,9 @@ namespace lto_leveltools
                 {
                     trigger = new EntityLogic(TriggerType.Variable, ge);
                     trigger.varCompare = EntityLogic.VarCompareType.Equals;
-                    trigger.varGlobal = false;
-                    trigger.varKey = "clk";
-                    trigger.varThreshold = clk;
+                    trigger.varGlobal = clk.global;
+                    trigger.varKey = clk.key;
+                    trigger.varThreshold = clk.value;
                     ge.logicData.Add(trigger);
                 }
                 EntityEvent evt = new EntityEvent(EventContainer.EventType.Wait);
@@ -270,7 +274,7 @@ namespace lto_leveltools
             }
         }
         //执行某个clk，使其在编辑模式进行运动
-        public void TransformByClk(int clk, bool forward)
+        public void TransformByClk(ClkDefination clk, bool forward)
         {
             foreach(var entity in this.GetLevelEditorSelection())
             {
@@ -417,7 +421,7 @@ namespace lto_leveltools
             }
         }
         //快速绝对记录
-        public void QuickAbsoluteLog(int clk, float duration)
+        public void QuickAbsoluteLog(ClkDefination clk, float duration)
         {
             foreach(var entity in this.GetLevelEditorSelection())
             {
