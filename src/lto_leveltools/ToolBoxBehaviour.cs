@@ -16,25 +16,27 @@ namespace lto_leveltools
 
         public bool generateForward = false;
         public bool generateBackward = true;
-        public string clkForward = "0";
-        public string clkBackward = "1";
+        public string clkForward = "  0";
+        public string clkBackward = "  1";
 
         public int relativeMode = 2;
 
         public bool logAfterGenerate = true;
-        public string duration = "1";
-        public string durationRandom = "0";
-        public string errorInfo = "";
+        public string duration = "  1";
+        public string durationRandom = "  0";
+        public string userInfo = "";
 
-        public string wait = "1";
-        public string waitRandom = "0";
+        public string wait = "  1";
+        public string waitRandom = "  0";
 
-        public string clksControlModule = "1";
+        public string clksControlModule = "  1";
 
-        public string executeClk = "1";
+        public string executeClk = "  1";
 
-        public string clkAbsoluteLog = "-1";
-        public string durationAbsoluteLog = "1";
+        public string clkAbsoluteLog = " -1";
+        public string durationAbsoluteLog = "  1";
+
+        public string scaleMultiplier = "  1";
 
         public Action OnLogButtonClick;
         public Action OnGenerateButtonClick;
@@ -76,7 +78,7 @@ namespace lto_leveltools
             }
             catch(Exception e)
             {
-                this.errorInfo = "顺行clk不正确";
+                this.userInfo = "顺行clk不正确";
                 return;
             }
             int clk2;
@@ -86,7 +88,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "逆行clk不正确";
+                this.userInfo = "逆行clk不正确";
                 return;
             }
             float time;
@@ -98,7 +100,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "持续时间不正确";
+                this.userInfo = "持续时间不正确";
                 return;
             }
             try
@@ -107,7 +109,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "持续时间随机不正确";
+                this.userInfo = "持续时间随机不正确";
                 return;
             }
             string type = this.relativeMode == 0 ? "Absolute" : (this.relativeMode == 1 ? "WorldDirection" : "LocalDirection");
@@ -134,7 +136,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "顺行clk不正确";
+                this.userInfo = "顺行clk不正确";
                 return;
             }
             int clk2;
@@ -144,7 +146,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "逆行clk不正确";
+                this.userInfo = "逆行clk不正确";
                 return;
             }
             float time;
@@ -156,7 +158,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "等待时间不正确";
+                this.userInfo = "等待时间不正确";
                 return;
             }
             try
@@ -165,7 +167,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "等待时间随机不正确";
+                this.userInfo = "等待时间随机不正确";
                 return;
             }
             if (generateForward)
@@ -281,14 +283,43 @@ namespace lto_leveltools
                 {
                     this.AbsoluteLogButtonClicked();
                 }
+                if (GUILayout.Button("移除clk"))
+                {
+                    this.RemoveClkClicked();
+                }
+
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            {
+                this.scaleMultiplier = GUILayout.TextField(this.scaleMultiplier);
+                if (GUILayout.Button("变换缩放"))
+                {
+                    this.ScaleButtonClicked();
+                }
 
             }
             GUILayout.EndHorizontal();
 
-            GUILayout.Label(this.errorInfo);
+            GUILayout.Label(this.userInfo);
 
             GUILayout.EndVertical();
             GUI.DragWindow();
+        }
+        public void ScaleButtonClicked()
+        {
+            float scale;
+            try
+            {
+                scale = Convert.ToSingle(this.scaleMultiplier);
+            }
+            catch (Exception e)
+            {
+                this.userInfo = "缩放比例格式不正确";
+                return;
+            }
+            modBehaviour.ScaleSelection(scale);
+            this.userInfo = "选区的移动事件缩放为了" + scale.ToString() + "倍";
         }
         public void AbsoluteLogButtonClicked()
         {
@@ -299,7 +330,7 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "绝对记录clk不正确";
+                this.userInfo = "绝对记录clk不正确";
                 return;
             }
             float duration;
@@ -309,10 +340,26 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "绝对记录clk不正确";
+                this.userInfo = "绝对记录clk不正确";
                 return;
             }
             modBehaviour.QuickAbsoluteLog(clk, duration);
+            this.userInfo = "当前坐标已经记录在clk=" + clk.ToString() + "中";
+        }
+        public void RemoveClkClicked()
+        {
+            int clk;
+            try
+            {
+                clk = Convert.ToInt32(this.clkAbsoluteLog);
+            }
+            catch (Exception e)
+            {
+                this.userInfo = "绝对记录clk不正确";
+                return;
+            }
+            modBehaviour.RemoveSelectionClk(clk);
+            this.userInfo = "移除了选区clk=" + clk.ToString() + "的触发器";
         }
         public void ExecuteButtonClicked(bool forward)
         {
@@ -323,10 +370,11 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "执行clk不正确";
+                this.userInfo = "执行clk不正确";
                 return;
             }
             modBehaviour.TransformByClk(clk1, forward);
+            this.userInfo = "执行了clk=" + clk1.ToString() + "的触发器";
         }
         public void GenerateButtonClicked()
         {
@@ -341,10 +389,11 @@ namespace lto_leveltools
             }
             catch (Exception e)
             {
-                this.errorInfo = "clk格式不正确";
+                this.userInfo = "clk格式不正确";
                 return;
             }
             this.modBehaviour.GenerateControlModule(clks);
+            this.userInfo = "生成了clk=" + clksControlModule + "的控制模块";
         }
     }
 }

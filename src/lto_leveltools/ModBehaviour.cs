@@ -69,12 +69,36 @@ namespace lto_leveltools
         {
             foreach(EntityLogic el in ge.logicData)
             {
-                if (el.triggerType == TriggerType.Variable && Mathf.Approximately(el.varThreshold, clk))
+                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals && Mathf.Approximately(el.varThreshold, clk))
                 {
                     return el;
                 }
             }
             return null;
+        }
+        //移除一个物体的一个clk触发器及其事件链
+        public void RemoveClk(GenericEntity ge, int clk)
+        {
+            for(int i=0; i<ge.logicData.Count;)
+            {
+                var el = ge.logicData[i];
+                if (el.triggerType == TriggerType.Variable && el.varCompare == EntityLogic.VarCompareType.Equals && Mathf.Approximately(el.varThreshold, clk))
+                {
+                    ge.logicData.RemoveAt(i);
+                }
+                else
+                {
+                    i++;
+                }
+            }
+        }
+        //
+        public void RemoveSelectionClk(int clk)
+        {
+            foreach(LevelEntity e in GetLevelEditorSelection())
+            {
+                RemoveClk(e.behaviour, clk);
+            }
         }
         //生成一个clk事件
         public EntityLogic GenerateClk(GenericEntity ge, int clk)
@@ -417,6 +441,25 @@ namespace lto_leveltools
                 data.eulerAngles = toRotation.eulerAngles;
                 data.position = toPosition;
                 trigger.events.Add(evt);
+            }
+        }
+        //将选区的事件进行缩放
+        public void ScaleSelection(float scaleMultiplier)
+        {
+            foreach(LevelEntity entity in GetLevelEditorSelection())
+            {
+                var ge = entity.behaviour;
+                foreach(EntityLogic trigger in ge.logicData)
+                {
+                    foreach(var evt in trigger.events)
+                    {
+                        if(evt.eventType == EventContainer.EventType.Transform)
+                        {
+                            var data = (EventContainer.TransformEvent)evt.eventData;
+                            data.position *= scaleMultiplier;
+                        }
+                    }
+                }
             }
         }
         public class EntityLog
