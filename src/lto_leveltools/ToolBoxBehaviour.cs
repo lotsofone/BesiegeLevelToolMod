@@ -7,12 +7,10 @@ using UnityEngine;
 
 namespace lto_leveltools
 {
-    class ToolBoxBehaviour : MonoBehaviour
+    class ToolBoxBehaviour : SafeUIBehaviour
     {
         private ModBehaviour modBehaviour;
-
-        private readonly int windowID = ModUtility.GetWindowId();
-        Rect windowRect = new Rect(20, 300, 150, 200);
+        
 
         public int varMode = 0;//变量模式，0：局部变量，1：全局变量
 
@@ -54,7 +52,12 @@ namespace lto_leveltools
             this.OnLogButtonClick += this.modBehaviour.LogSelection;
             this.OnGenerateButtonClick += this.GenerateTransformEvent;
         }
-
+        protected override void Start()
+        {
+            base.Start();
+            this.name = "地形工具";
+            this.windowRect = new Rect(20, 300, 150, 200);
+        }
         void GenerateTransformEvent()
         {
             int clk1;
@@ -166,14 +169,12 @@ namespace lto_leveltools
             }
         }
 
-        void OnGUI()
+        public override bool ShouldShowGUI()
         {
-            if(StatMaster.isMP && !StatMaster.levelSimulating && !StatMaster.inMenu)
-            {
-                this.windowRect = GUILayout.Window(this.windowID, this.windowRect, new GUI.WindowFunction(this.ToolBoxWindow), "地形工具");
-            }
+            return StatMaster.isMP && !StatMaster.levelSimulating && !StatMaster.inMenu;
         }
-        void ToolBoxWindow(int id)
+        
+        protected override void WindowContent(int id)
         {
             this.varMode = GUILayout.SelectionGrid(this.varMode, new string[] { "局部变量", "全局变量"}, 2);
             GUILayout.BeginVertical();

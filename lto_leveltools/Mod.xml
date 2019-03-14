@@ -9,7 +9,7 @@
 	<Name>lto_leveltools</Name>
 	<Author>渔夫lotsofone</Author> <!-- FIX: Insert your name here. -->
 	<!-- Major.Minor.Build -->
-	<Version>0.0.1</Version>
+	<Version>0.1.1</Version>
 	
 	<Description>
 		Some tools for level editor. <!-- FIX: Insert a short description here. -->

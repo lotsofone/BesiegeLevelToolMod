@@ -50,6 +50,7 @@
     <Compile Include="ModBehaviour.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SafeUIBehaviour.cs" />
     <Compile Include="ToolBoxBehaviour.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
